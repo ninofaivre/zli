@@ -207,7 +207,7 @@ pub const Command = struct {
         self.allocator.destroy(self);
     }
 
-    pub fn listCommands(self: *const Command) !void {
+    pub fn listCommands(self: *Command) !void {
         if (self.commands_by_name.count() == 0) {
             return;
         }
@@ -231,7 +231,7 @@ pub const Command = struct {
         try printAlignedCommands(commands.items);
     }
 
-    pub fn listCommandsBySection(self: *const Command) !void {
+    pub fn listCommandsBySection(self: *Command) !void {
         if (self.commands_by_name.count() == 0) {
             return;
         }
@@ -297,7 +297,7 @@ pub const Command = struct {
         // --- END: MODIFIED SECTION ---
     }
 
-    pub fn listFlags(self: *const Command) !void {
+    pub fn listFlags(self: *Command) !void {
         if (self.flags_by_name.count() == 0) {
             return;
         }
@@ -319,7 +319,7 @@ pub const Command = struct {
         try printAlignedFlags(flags.items);
     }
 
-    pub fn listPositionalArgs(self: *const Command) !void {
+    pub fn listPositionalArgs(self: *Command) !void {
         if (self.positional_args.items.len == 0) return;
 
         try self.stdout.interface.print("Arguments:\n", .{});
@@ -389,7 +389,7 @@ pub const Command = struct {
         if (self.options.version) |version| try self.stdout.interface.print("{s}v{}{s}\n", .{ styles.DIM, version, styles.RESET });
     }
 
-    pub fn showVersion(self: *const Command) !void {
+    pub fn showVersion(self: *Command) !void {
         if (self.options.version) |version| try self.stdout.interface.print("{}\n", .{version});
     }
 
@@ -728,7 +728,7 @@ pub const Command = struct {
         return null;
     }
 
-    fn checkDeprecated(self: *const Command) !void {
+    fn checkDeprecated(self: *Command) !void {
         if (self.options.deprecated) {
             if (self.options.version) |version| {
                 try self.stdout.interface.print("'{s}' v{} is deprecated\n", .{ self.options.name, version });
