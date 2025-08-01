@@ -298,7 +298,7 @@ pub const Command = struct {
             }.lessThan);
 
             try printAlignedCommands(cmds_list.items);
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
         }
         // --- END: MODIFIED SECTION ---
     }
@@ -308,7 +308,7 @@ pub const Command = struct {
             return;
         }
 
-        try self.stdout.interface.print("Flags:\n", .{});
+        try self.stdout.interface.writeAll("Flags:\n");
 
         // Collect all flags into a list for processing
         var flags = std.ArrayList(Flag).init(self.allocator);
@@ -328,7 +328,7 @@ pub const Command = struct {
     pub fn listPositionalArgs(self: *Command) !void {
         if (self.positional_args.items.len == 0) return;
 
-        try self.stdout.interface.print("Arguments:\n", .{});
+        try self.stdout.interface.writeAll("Arguments:\n");
 
         var max_width: usize = 0;
         for (self.positional_args.items) |arg| {
@@ -342,25 +342,25 @@ pub const Command = struct {
             try writeByteNTimes(&self.stdout.interface, ' ', padding + 4); // Align to column
             try self.stdout.interface.print("{s}", .{arg.description});
             if (arg.required) {
-                try self.stdout.interface.print(" (required)", .{});
+                try self.stdout.interface.writeAll(" (required)");
             }
             if (arg.variadic) {
-                try self.stdout.interface.print(" (variadic)", .{});
+                try self.stdout.interface.writeAll(" (variadic)");
             }
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
         }
 
-        try self.stdout.interface.print("\n", .{});
+        try self.stdout.interface.writeAll("\n");
     }
 
     pub fn listAliases(self: *Command) !void {
         if (self.options.aliases) |aliases| {
             if (aliases.len == 0) return;
-            try self.stdout.interface.print("Aliases: ", .{});
+            try self.stdout.interface.writeAll("Aliases: ");
             for (aliases, 0..) |alias, i| {
                 try self.stdout.interface.print("{s}", .{alias});
                 if (i < aliases.len - 1) {
-                    try self.stdout.interface.print(", ", .{});
+                    try self.stdout.interface.writeAll(", ");
                 }
             }
         }
@@ -370,7 +370,7 @@ pub const Command = struct {
         const parents = try self.getParents(self.allocator);
         defer parents.deinit();
 
-        try self.stdout.interface.print("Usage: ", .{});
+        try self.stdout.interface.writeAll("Usage: ");
 
         for (parents.items) |p| {
             try self.stdout.interface.print("{s} ", .{p.options.name});
@@ -385,25 +385,25 @@ pub const Command = struct {
                 try self.stdout.interface.print(" [{s}]", .{arg.name});
             }
             if (arg.variadic) {
-                try self.stdout.interface.print("...", .{});
+                try self.stdout.interface.writeAll("...");
             }
         }
     }
 
     pub fn showInfo(self: * Command) !void {
         try self.stdout.interface.print("{s}{s}{s}\n", .{ styles.BOLD, self.options.description, styles.RESET });
-        if (self.options.version) |version| try self.stdout.interface.print("{s}v{}{s}\n", .{ styles.DIM, version, styles.RESET });
+        if (self.options.version) |version| try self.stdout.interface.print("{s}v{f}{s}\n", .{ styles.DIM, version, styles.RESET });
     }
 
     pub fn showVersion(self: *Command) !void {
-        if (self.options.version) |version| try self.stdout.interface.print("{}\n", .{version});
+        if (self.options.version) |version| try self.stdout.interface.print("{f}\n", .{version});
     }
 
     /// Prints traditional help with commands NOT organized by sections
     pub fn printHelp(self: *Command) !void {
         if (!self.options.deprecated) {
             try self.showInfo();
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
             if (self.options.help) |help| {
                 try self.stdout.interface.print("{s}\n\n", .{help});
@@ -421,7 +421,7 @@ pub const Command = struct {
 
             if (self.options.aliases) |aliases| {
                 if (aliases.len > 0) {
-                    try self.stdout.interface.print("\n\n", .{});
+                    try self.stdout.interface.writeAll("\n\n");
                 }
             }
 
@@ -429,31 +429,31 @@ pub const Command = struct {
             try self.listAliases();
 
             // Sub commands
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
-            if (self.commands_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
+            if (self.commands_by_name.count() > 0) try self.stdout.interface.writeAll("\n");
             try self.listCommands();
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
             // Flags
             try self.listFlags();
-            if (self.flags_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
+            if (self.flags_by_name.count() > 0) try self.stdout.interface.writeAll("\n");
 
             // Arguments
             try self.listPositionalArgs();
 
             const has_subcommands = self.commands_by_name.count() > 0;
 
-            try self.stdout.interface.print("Use \"", .{});
+            try self.stdout.interface.writeAll("Use \"");
             for (parents.items) |p| {
                 try self.stdout.interface.print("{s} ", .{p.options.name});
             }
             try self.stdout.interface.print("{s}", .{self.options.name});
 
             if (has_subcommands) {
-                try self.stdout.interface.print(" [command]", .{});
+                try self.stdout.interface.writeAll(" [command]");
             }
-            try self.stdout.interface.print(" --help\" for more information.\n", .{});
+            try self.stdout.interface.writeAll(" --help\" for more information.\n");
         }
     }
 
@@ -461,7 +461,7 @@ pub const Command = struct {
     pub fn printStructuredHelp(self: *Command) !void {
         if (!self.options.deprecated) {
             try self.showInfo();
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
             if (self.options.help) |help| {
                 try self.stdout.interface.print("{s}\n\n", .{help});
@@ -479,7 +479,7 @@ pub const Command = struct {
 
             if (self.options.aliases) |aliases| {
                 if (aliases.len > 0) {
-                    try self.stdout.interface.print("\n\n", .{});
+                    try self.stdout.interface.writeAll("\n\n");
                 }
             }
 
@@ -487,31 +487,31 @@ pub const Command = struct {
             try self.listAliases();
 
             // Sub commands
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
-            if (self.commands_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
+            if (self.commands_by_name.count() > 0) try self.stdout.interface.writeAll("\n");
             try self.listCommandsBySection();
-            try self.stdout.interface.print("\n", .{});
+            try self.stdout.interface.writeAll("\n");
 
             // Flags
             try self.listFlags();
-            if (self.flags_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
+            if (self.flags_by_name.count() > 0) try self.stdout.interface.writeAll("\n");
 
             // Arguments
             try self.listPositionalArgs();
 
             const has_subcommands = self.commands_by_name.count() > 0;
 
-            try self.stdout.interface.print("Use \"", .{});
+            try self.stdout.interface.writeAll("Use \"");
             for (parents.items) |p| {
                 try self.stdout.interface.print("{s} ", .{p.options.name});
             }
             try self.stdout.interface.print("{s}", .{self.options.name});
 
             if (has_subcommands) {
-                try self.stdout.interface.print(" [command]", .{});
+                try self.stdout.interface.writeAll(" [command]");
             }
-            try self.stdout.interface.print(" --help\" for more information.\n", .{});
+            try self.stdout.interface.writeAll(" --help\" for more information.\n");
         }
     }
 
@@ -737,7 +737,7 @@ pub const Command = struct {
     fn checkDeprecated(self: *Command) !void {
         if (self.options.deprecated) {
             if (self.options.version) |version| {
-                try self.stdout.interface.print("'{s}' v{} is deprecated\n", .{ self.options.name, version });
+                try self.stdout.interface.print("'{s}' v{f} is deprecated\n", .{ self.options.name, version });
             } else {
                 try self.stdout.interface.print("'{s}' is deprecated\n", .{self.options.name});
             }
@@ -915,7 +915,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
             try stdout.interface.print(" -{s}, ", .{shortcut});
             current_width += 1 + shortcut.len + 2;
         } else {
-            try stdout.interface.print("     ", .{});
+            try stdout.interface.writeAll("     ");
             current_width += 5;
         }
 
@@ -936,12 +936,12 @@ fn printAlignedFlags(flags: []const Flag) !void {
         // Print default value
         switch (flag.type) {
             .Bool => try stdout.interface.print(" (default: {s})", .{if (flag.default_value.Bool) "true" else "false"}),
-            .Int => try stdout.interface.print(" (default: {})", .{flag.default_value.Int}),
+            .Int => try stdout.interface.print(" (default: {f})", .{flag.default_value.Int}),
             .String => if (flag.default_value.String.len > 0) {
                 try stdout.interface.print(" (default: \"{s}\")", .{flag.default_value.String});
             },
         }
-        try stdout.interface.print("\n", .{});
+        try stdout.interface.writeAll("\n");
     }
 }
 
