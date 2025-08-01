@@ -884,7 +884,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
     if (flags.len == 0) return;
 
     // Get stdout from the first flag's command context
-    const stdout = std.fs.File.stdout().writerStreaming(&.{});
+    var stdout = std.fs.File.stdout().writerStreaming(&.{});
 
     // Calculate maximum width for the flag name + shortcut part
     var max_width: usize = 0;
