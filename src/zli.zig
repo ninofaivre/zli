@@ -547,7 +547,7 @@ pub const Command = struct {
         if (self.positional_args.items.len > 0) {
             const last_arg = self.positional_args.items[self.positional_args.items.len - 1];
             if (last_arg.variadic) {
-                try self.stderr.interface.print("Variadic args should only appear at the end.\n", .{});
+                try self.stderr.interface.writeAll("Variadic args should only appear at the end.\n");
                 std.process.exit(1);
             }
         }
@@ -706,13 +706,13 @@ pub const Command = struct {
             var first = true;
             for (expected) |arg| {
                 if (arg.required) {
-                    if (!first) try self.stderr.interface.print(", ", .{});
+                    if (!first) try self.stderr.interface.writeAll(", ");
                     try self.stderr.interface.print("{s}", .{arg.name});
                     first = false;
                 }
             }
 
-            try self.stderr.interface.print("\n", .{});
+            try self.stderr.interface.writeAll("\n");
             try self.displayCommandError();
             return error.MissingArgs;
         }
@@ -720,7 +720,7 @@ pub const Command = struct {
         if (expected.len > 0) {
             const last_arg = expected[expected.len - 1];
             if (!last_arg.variadic and args.items.len > expected.len) {
-                try self.stderr.interface.print("Too many positional arguments. Expected at most {}.\n", .{expected.len});
+                try self.stderr.interface.print("Too many positional arguments. Expected at most {d}.\n", .{expected.len});
                 try self.displayCommandError();
                 return error.TooManyArgs;
             }
@@ -827,7 +827,7 @@ pub const Command = struct {
         const parents = try self.getParents(self.allocator);
         defer parents.deinit();
 
-        try self.stderr.interface.print("\nRun: '", .{});
+        try self.stderr.interface.writeAll("\nRun: '");
         for (parents.items) |p| {
             try self.stderr.interface.print("{s} ", .{p.options.name});
         }
