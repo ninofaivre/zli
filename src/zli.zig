@@ -762,7 +762,7 @@ pub const Command = struct {
                 // Check if the current command expects positional arguments
                 const expects_pos_args = current.positional_args.items.len > 0;
                 if (!expects_pos_args) {
-                    try current.stderr.print("Unknown command: '{s}'\n", .{name});
+                    try current.stderr.interface.print("Unknown command: '{s}'\n", .{name});
                     try current.displayCommandError();
                     return error.UnknownCommand;
                 }
