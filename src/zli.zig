@@ -136,7 +136,7 @@ pub const CommandOptions = struct {
     replaced_by: ?[]const u8 = null,
 };
 
-fn writeByteNTimes(w: std.io.Writer, byte: u8, n: usize) !void {
+fn writeByteNTimes(w: *std.io.Writer, byte: u8, n: usize) !void {
     for (0..n) |_| {
         try w.writeByte(byte);
     }
