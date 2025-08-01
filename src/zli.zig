@@ -4,7 +4,7 @@ pub const SpinnerStyles = Spinner.SpinnerStyles;
 const builtin = @import("lib/builtin.zig");
 pub const styles = builtin.styles;
 
-const Writer = @TypeOf(std.io.getStdOut().writer());
+const Writer = @TypeOf(std.fs.File.stdout().writerStreaming(&.{}));
 
 /// FlagType represents the type of a flag, can be a boolean, integer, or string.
 pub const FlagType = enum {
@@ -158,8 +158,8 @@ pub const Command = struct {
 
     parent: ?*Command = null,
     allocator: std.mem.Allocator,
-    stdout: Writer = std.io.getStdOut().writer(),
-    stderr: Writer = std.io.getStdErr().writer(),
+    stdout: Writer = std.fs.File.stdout().writerStreaming(&.{}),
+    stderr: Writer = std.fs.File.stderr().writerStreaming(&.{}),
 
     pub fn init(allocator: std.mem.Allocator, options: CommandOptions, execFn: ExecFnToPass) !*Command {
         const cmd = try allocator.create(Command);
@@ -772,7 +772,7 @@ pub const Command = struct {
 
     // Need to make find command, parse flags and parse pos_args execution in parallel
     pub fn execute(self: *Command, context: struct { data: ?*anyopaque = null }) !void {
-        var bw = std.io.bufferedWriter(self.stdout);
+        var bw = std.io.buffered_writer.bufferedWriter(self.stdout);
         defer bw.flush() catch {};
 
         var input = try std.process.argsWithAllocator(self.allocator);
@@ -878,7 +878,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
     if (flags.len == 0) return;
 
     // Get stdout from the first flag's command context
-    const stdout = std.io.getStdOut().writer();
+    const stdout = std.fs.File.stdout().writerStreaming(&.{});
 
     // Calculate maximum width for the flag name + shortcut part
     var max_width: usize = 0;
