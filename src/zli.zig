@@ -385,7 +385,7 @@ pub const Command = struct {
     }
 
     pub fn showInfo(self: *const Command) !void {
-        try self.stdout.print("{s}{s}{s}\n", .{ styles.BOLD, self.options.description, styles.RESET });
+        try self.stdout.interface.print("{s}{s}{s}\n", .{ styles.BOLD, self.options.description, styles.RESET });
         if (self.options.version) |version| try self.stdout.print("{s}v{}{s}\n", .{ styles.DIM, version, styles.RESET });
     }
 
