@@ -82,7 +82,7 @@ pub fn init(allocator: Allocator, options: SpinnerOptions) !*Spinner {
         g_active_spinner = spinner;
         var new_action: std.posix.Sigaction = .{
             .handler = .{ .handler = handleInterrupt },
-            .mask = std.posix.empty_sigset, // Use std.posix
+            .mask = std.posix.sigemptyset(), // Use std.posix
             .flags = 0,
         };
         std.posix.sigaction(std.posix.SIG.INT, &new_action, &spinner.prev_handler);
@@ -149,7 +149,7 @@ pub fn stop(self: *Spinner) !void {
     // Final redraw to leave terminal clean
     try self.render(false);
     // Show cursor
-    try self.writer.print("\x1b[?25h", .{});
+    try self.writer.interface.writeAll("\x1b[?25h");
 }
 
 /// Stops the spinner and marks the final step as successful.
@@ -247,9 +247,9 @@ fn findLastSpinningLine(self: *Spinner) ?*SpinnerLine {
 fn erase(self: *Spinner) !void {
     if (self.lines_drawn == 0) return;
     // Move cursor up N lines
-    try self.writer.print("\r\x1b[{d}A", .{self.lines_drawn});
+    try self.writer.interface.print("\r\x1b[{d}A", .{self.lines_drawn});
     // Clear from cursor to end of screen
-    try self.writer.print("\x1b[J", .{});
+    try self.writer.interface.writeAll("\x1b[J");
 }
 
 /// Renders all lines based on their current state.
@@ -269,7 +269,7 @@ fn render(self: *Spinner, is_spinning: bool) !void {
         if (line.state == .spinning and is_spinning) {
             const frame = self.frames[self.frame_index];
             // Use runtime formatting to combine the parts.
-            try self.writer.print("{s}{s}{s} {s}\n", .{ styles.CYAN, frame, styles.RESET, line.message });
+            try self.writer.interface.print("{s}{s}{s} {s}\n", .{ styles.CYAN, frame, styles.RESET, line.message });
         } else {
             // All other cases use static prefixes that can be concatenated at compile-time.
             // This includes the "paused" spinning state.
@@ -280,7 +280,7 @@ fn render(self: *Spinner, is_spinning: bool) !void {
                 .info => styles.BLUE ++ "ℹ" ++ styles.RESET,
                 .preserved => styles.DIM ++ "»" ++ styles.RESET,
             };
-            try self.writer.print("{s} {s}\n", .{ prefix, line.message });
+            try self.writer.interface.print("{s} {s}\n", .{ prefix, line.message });
         }
         drawn_count += 1;
     }
@@ -295,8 +295,8 @@ fn render(self: *Spinner, is_spinning: bool) !void {
 /// The main loop for the background thread.
 fn spinLoop(self: *Spinner) void {
     // Hide cursor
-    self.writer.print("\x1b[?25l", .{}) catch return;
-    defer self.writer.print("\x1b[?25h", .{}) catch {};
+    self.writer.interface.writeAll("\x1b[?25l") catch return;
+    defer self.writer.interface.writeAll("\x1b[?25h") catch {};
 
     while (self.is_running.load(.acquire)) {
         self.render(true) catch {
