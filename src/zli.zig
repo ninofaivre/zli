@@ -778,7 +778,7 @@ pub const Command = struct {
 
     // Need to make find command, parse flags and parse pos_args execution in parallel
     pub fn execute(self: *Command, context: struct { data: ?*anyopaque = null }) !void {
-        var bw = std.io.bufferedWriter(self.stdout);
+        var bw = std.io.bufferedWriter(self.stdout.interface);
         defer bw.flush() catch {};
 
         var input = try std.process.argsWithAllocator(self.allocator);
