@@ -7,7 +7,7 @@ var g_active_spinner: ?*Spinner = null;
 /// Progress indicator for long running operations
 const Spinner = @This();
 
-const Writer = @TypeOf(std.io.getStdOut().writer());
+const Writer = @TypeOf(std.fs.File.stdout().writer());
 const Allocator = std.mem.Allocator;
 
 /// The state of an individual line managed by the spinner.
@@ -69,7 +69,7 @@ pub fn init(allocator: Allocator, options: SpinnerOptions) !*Spinner {
 
     spinner.* = Spinner{
         .allocator = allocator,
-        .writer = std.io.getStdOut().writer(),
+        .writer = std.fs.File.stdout().writer(),
         .frames = owned_frames,
         .interval = options.interval_ms * std.time.ns_per_ms,
         .is_running = std.atomic.Value(bool).init(false),
