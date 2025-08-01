@@ -936,7 +936,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
         // Print default value
         switch (flag.type) {
             .Bool => try stdout.interface.print(" (default: {s})", .{if (flag.default_value.Bool) "true" else "false"}),
-            .Int => try stdout.interface.print(" (default: {f})", .{flag.default_value.Int}),
+            .Int => try stdout.interface.print(" (default: {d})", .{flag.default_value.Int}),
             .String => if (flag.default_value.String.len > 0) {
                 try stdout.interface.print(" (default: \"{s}\")", .{flag.default_value.String});
             },
