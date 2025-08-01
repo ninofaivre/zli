@@ -339,7 +339,7 @@ pub const Command = struct {
         for (self.positional_args.items) |arg| {
             const padding = max_width - arg.name.len;
             try self.stdout.interface.print("  {s}", .{arg.name});
-            try writeByteNTimes(self.stdout.interface, ' ', padding + 4); // Align to column
+            try writeByteNTimes(&self.stdout.interface, ' ', padding + 4); // Align to column
             try self.stdout.interface.print("{s}", .{arg.description});
             if (arg.required) {
                 try self.stdout.interface.print(" (required)", .{});
@@ -874,7 +874,7 @@ fn printAlignedCommands(commands: []*Command) !void {
 
         const padding = max_width - printed_width;
 
-        try writeByteNTimes(cmd.stdout.interface, ' ', padding + 4); // 4-space gap between name and desc
+        try writeByteNTimes(&cmd.stdout.interface, ' ', padding + 4); // 4-space gap between name and desc
         try cmd.stdout.interface.print("{s}\n", .{desc});
     }
 }
@@ -925,7 +925,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
 
         // Calculate and add padding
         const padding = max_width - current_width;
-        try writeByteNTimes(stdout.interface, ' ', padding + 4); // 4-space gap
+        try writeByteNTimes(&stdout.interface, ' ', padding + 4); // 4-space gap
 
         // Print description and type
         try stdout.interface.print("{s} [{s}]", .{
