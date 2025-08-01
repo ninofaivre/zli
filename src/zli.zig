@@ -136,6 +136,12 @@ pub const CommandOptions = struct {
     replaced_by: ?[]const u8 = null,
 };
 
+fn writeByteNTimes(w: std.io.Writer, byte: u8, n: usize) !void {
+    for (0..n) |_| {
+        try w.writeByte(byte);
+    }
+}
+
 /// Represents a single command in the Command Line Interface (CLI),
 /// such as "run", "version", or any other user-invoked operation.
 /// Each command encapsulates specific functionality or behavior
@@ -333,7 +339,7 @@ pub const Command = struct {
         for (self.positional_args.items) |arg| {
             const padding = max_width - arg.name.len;
             try self.stdout.interface.print("  {s}", .{arg.name});
-            try self.stdout.writeByteNTimes(' ', padding + 4); // Align to column
+            try writeByteNTimes(self.stdout, ' ', padding + 4); // Align to column
             try self.stdout.interface.print("{s}", .{arg.description});
             if (arg.required) {
                 try self.stdout.interface.print(" (required)", .{});
@@ -868,7 +874,7 @@ fn printAlignedCommands(commands: []*Command) !void {
 
         const padding = max_width - printed_width;
 
-        try cmd.stdout.writeByteNTimes(' ', padding + 4); // 4-space gap between name and desc
+        try writeByteNTimes(cmd.stdout, ' ', padding + 4); // 4-space gap between name and desc
         try cmd.stdout.interface.print("{s}\n", .{desc});
     }
 }
@@ -919,7 +925,7 @@ fn printAlignedFlags(flags: []const Flag) !void {
 
         // Calculate and add padding
         const padding = max_width - current_width;
-        try stdout.writeByteNTimes(' ', padding + 4); // 4-space gap
+        try writeByteNTimes(stdout, ' ', padding + 4); // 4-space gap
 
         // Print description and type
         try stdout.interface.print("{s} [{s}]", .{
