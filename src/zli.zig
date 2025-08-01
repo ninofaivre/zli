@@ -547,7 +547,7 @@ pub const Command = struct {
         if (self.positional_args.items.len > 0) {
             const last_arg = self.positional_args.items[self.positional_args.items.len - 1];
             if (last_arg.variadic) {
-                try self.stderr.print("Variadic args should only appear at the end.\n", .{});
+                try self.stderr.interface.print("Variadic args should only appear at the end.\n", .{});
                 std.process.exit(1);
             }
         }
@@ -587,13 +587,13 @@ pub const Command = struct {
                     const value = arg[2 + eql_index + 1 ..];
                     const flag = self.findFlag(flag_name);
                     if (flag == null) {
-                        try self.stderr.print("Unknown flag: --{s}\n", .{flag_name});
+                        try self.stderr.interface.print("Unknown flag: --{s}\n", .{flag_name});
                         try self.displayCommandError();
                         std.process.exit(1);
                     }
                     const flag_value = flag.?.safeEvaluate(value) catch {
-                        try self.stderr.print("Invalid value for flag --{s}: '{s}'\n", .{ flag_name, value });
-                        try self.stderr.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
+                        try self.stderr.interface.print("Invalid value for flag --{s}: '{s}'\n", .{ flag_name, value });
+                        try self.stderr.interface.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
                         try self.displayCommandError();
                         std.process.exit(1);
                     };
@@ -605,7 +605,7 @@ pub const Command = struct {
                     const flag_name = arg[2..];
                     const flag = self.findFlag(flag_name);
                     if (flag == null) {
-                        try self.stderr.print("Unknown flag: --{s}\n", .{flag_name});
+                        try self.stderr.interface.print("Unknown flag: --{s}\n", .{flag_name});
                         try self.displayCommandError();
                         std.process.exit(1);
                     }
@@ -627,14 +627,14 @@ pub const Command = struct {
                         _ = try popFront([]const u8, args);
                     } else {
                         if (!has_next) {
-                            try self.stderr.print("Missing value for flag --{s}\n", .{flag_name});
+                            try self.stderr.interface.print("Missing value for flag --{s}\n", .{flag_name});
                             try self.displayCommandError();
                             std.process.exit(1);
                         }
                         const value = args.items[1];
                         const flag_value = flag.?.safeEvaluate(value) catch {
-                            try self.stderr.print("Invalid value for flag --{s}: '{s}'\n", .{ flag_name, value });
-                            try self.stderr.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
+                            try self.stderr.interface.print("Invalid value for flag --{s}: '{s}'\n", .{ flag_name, value });
+                            try self.stderr.interface.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
                             try self.displayCommandError();
                             std.process.exit(1);
                         };
@@ -652,24 +652,24 @@ pub const Command = struct {
                     const shortcut = shortcuts[j .. j + 1];
                     const flag = self.findFlag(shortcut);
                     if (flag == null) {
-                        try self.stderr.print("Unknown flag: -{c}\n", .{shortcuts[j]});
+                        try self.stderr.interface.print("Unknown flag: -{c}\n", .{shortcuts[j]});
                         std.process.exit(1);
                     }
                     if (flag.?.type == .Bool) {
                         try self.flag_values.put(flag.?.name, .{ .Bool = true });
                     } else {
                         if (j < shortcuts.len - 1) {
-                            try self.stderr.print("Flag -{c} ({s}) must be last in group since it expects a value\n", .{ shortcuts[j], flag.?.name });
+                            try self.stderr.interface.print("Flag -{c} ({s}) must be last in group since it expects a value\n", .{ shortcuts[j], flag.?.name });
                             std.process.exit(1);
                         }
                         if (args.items.len < 2) {
-                            try self.stderr.print("Missing value for flag -{c} ({s})\n", .{ shortcuts[j], flag.?.name });
+                            try self.stderr.interface.print("Missing value for flag -{c} ({s})\n", .{ shortcuts[j], flag.?.name });
                             std.process.exit(1);
                         }
                         const value = args.items[1];
                         const flag_value = flag.?.safeEvaluate(value) catch {
-                            try self.stderr.print("Invalid value for flag -{c} ({s}): '{s}'\n", .{ shortcuts[j], flag.?.name, value });
-                            try self.stderr.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
+                            try self.stderr.interface.print("Invalid value for flag -{c} ({s}): '{s}'\n", .{ shortcuts[j], flag.?.name, value });
+                            try self.stderr.interface.print("Expected a value of type: {s}\n", .{@tagName(flag.?.type)});
                             std.process.exit(1);
                         };
                         try self.flag_values.put(flag.?.name, flag_value);
@@ -701,18 +701,18 @@ pub const Command = struct {
         }
 
         if (args.items.len < required_count) {
-            try self.stderr.print("Missing {d} positional argument(s).\n\nExpected: ", .{required_count});
+            try self.stderr.interface.print("Missing {d} positional argument(s).\n\nExpected: ", .{required_count});
 
             var first = true;
             for (expected) |arg| {
                 if (arg.required) {
-                    if (!first) try self.stderr.print(", ", .{});
-                    try self.stderr.print("{s}", .{arg.name});
+                    if (!first) try self.stderr.interface.print(", ", .{});
+                    try self.stderr.interface.print("{s}", .{arg.name});
                     first = false;
                 }
             }
 
-            try self.stderr.print("\n", .{});
+            try self.stderr.interface.print("\n", .{});
             try self.displayCommandError();
             return error.MissingArgs;
         }
@@ -720,7 +720,7 @@ pub const Command = struct {
         if (expected.len > 0) {
             const last_arg = expected[expected.len - 1];
             if (!last_arg.variadic and args.items.len > expected.len) {
-                try self.stderr.print("Too many positional arguments. Expected at most {}.\n", .{expected.len});
+                try self.stderr.interface.print("Too many positional arguments. Expected at most {}.\n", .{expected.len});
                 try self.displayCommandError();
                 return error.TooManyArgs;
             }
@@ -827,11 +827,11 @@ pub const Command = struct {
         const parents = try self.getParents(self.allocator);
         defer parents.deinit();
 
-        try self.stderr.print("\nRun: '", .{});
+        try self.stderr.interface.print("\nRun: '", .{});
         for (parents.items) |p| {
-            try self.stderr.print("{s} ", .{p.options.name});
+            try self.stderr.interface.print("{s} ", .{p.options.name});
         }
-        try self.stderr.print("{s} --help'\n", .{self.options.name});
+        try self.stderr.interface.print("{s} --help'\n", .{self.options.name});
     }
 };
 
