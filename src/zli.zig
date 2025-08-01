@@ -212,7 +212,7 @@ pub const Command = struct {
             return;
         }
 
-        try self.stdout.print("{s}:\n", .{self.options.commands_title});
+        try self.stdout.interface.print("{s}:\n", .{self.options.commands_title});
 
         var commands = std.ArrayList(*Command).init(self.allocator);
         defer commands.deinit();
@@ -281,7 +281,7 @@ pub const Command = struct {
             // We know the key exists, so we can use .?
             const cmds_list = section_map.get(section_name).?;
 
-            try self.stdout.print("{s}{s}{s}:\n", .{ styles.BOLD, section_name, styles.RESET });
+            try self.stdout.interface.print("{s}{s}{s}:\n", .{ styles.BOLD, section_name, styles.RESET });
 
             // 4. FIX: Sort the commands *within* this section by their name.
             std.sort.insertion(*Command, cmds_list.items, {}, struct {
@@ -292,7 +292,7 @@ pub const Command = struct {
             }.lessThan);
 
             try printAlignedCommands(cmds_list.items);
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
         }
         // --- END: MODIFIED SECTION ---
     }
@@ -302,7 +302,7 @@ pub const Command = struct {
             return;
         }
 
-        try self.stdout.print("Flags:\n", .{});
+        try self.stdout.interface.print("Flags:\n", .{});
 
         // Collect all flags into a list for processing
         var flags = std.ArrayList(Flag).init(self.allocator);
@@ -322,7 +322,7 @@ pub const Command = struct {
     pub fn listPositionalArgs(self: *const Command) !void {
         if (self.positional_args.items.len == 0) return;
 
-        try self.stdout.print("Arguments:\n", .{});
+        try self.stdout.interface.print("Arguments:\n", .{});
 
         var max_width: usize = 0;
         for (self.positional_args.items) |arg| {
@@ -332,29 +332,29 @@ pub const Command = struct {
 
         for (self.positional_args.items) |arg| {
             const padding = max_width - arg.name.len;
-            try self.stdout.print("  {s}", .{arg.name});
+            try self.stdout.interface.print("  {s}", .{arg.name});
             try self.stdout.writeByteNTimes(' ', padding + 4); // Align to column
-            try self.stdout.print("{s}", .{arg.description});
+            try self.stdout.interface.print("{s}", .{arg.description});
             if (arg.required) {
-                try self.stdout.print(" (required)", .{});
+                try self.stdout.interface.print(" (required)", .{});
             }
             if (arg.variadic) {
-                try self.stdout.print(" (variadic)", .{});
+                try self.stdout.interface.print(" (variadic)", .{});
             }
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
         }
 
-        try self.stdout.print("\n", .{});
+        try self.stdout.interface.print("\n", .{});
     }
 
     pub fn listAliases(self: *Command) !void {
         if (self.options.aliases) |aliases| {
             if (aliases.len == 0) return;
-            try self.stdout.print("Aliases: ", .{});
+            try self.stdout.interface.print("Aliases: ", .{});
             for (aliases, 0..) |alias, i| {
-                try self.stdout.print("{s}", .{alias});
+                try self.stdout.interface.print("{s}", .{alias});
                 if (i < aliases.len - 1) {
-                    try self.stdout.print(", ", .{});
+                    try self.stdout.interface.print(", ", .{});
                 }
             }
         }
@@ -364,43 +364,43 @@ pub const Command = struct {
         const parents = try self.getParents(self.allocator);
         defer parents.deinit();
 
-        try self.stdout.print("Usage: ", .{});
+        try self.stdout.interface.print("Usage: ", .{});
 
         for (parents.items) |p| {
-            try self.stdout.print("{s} ", .{p.options.name});
+            try self.stdout.interface.print("{s} ", .{p.options.name});
         }
 
-        try self.stdout.print("{s} [options]", .{self.options.name});
+        try self.stdout.interface.print("{s} [options]", .{self.options.name});
 
         for (self.positional_args.items) |arg| {
             if (arg.required) {
-                try self.stdout.print(" <{s}>", .{arg.name});
+                try self.stdout.interface.print(" <{s}>", .{arg.name});
             } else {
-                try self.stdout.print(" [{s}]", .{arg.name});
+                try self.stdout.interface.print(" [{s}]", .{arg.name});
             }
             if (arg.variadic) {
-                try self.stdout.print("...", .{});
+                try self.stdout.interface.print("...", .{});
             }
         }
     }
 
-    pub fn showInfo(self: *const Command) !void {
+    pub fn showInfo(self: * Command) !void {
         try self.stdout.interface.print("{s}{s}{s}\n", .{ styles.BOLD, self.options.description, styles.RESET });
-        if (self.options.version) |version| try self.stdout.print("{s}v{}{s}\n", .{ styles.DIM, version, styles.RESET });
+        if (self.options.version) |version| try self.stdout.interface.print("{s}v{}{s}\n", .{ styles.DIM, version, styles.RESET });
     }
 
     pub fn showVersion(self: *const Command) !void {
-        if (self.options.version) |version| try self.stdout.print("{}\n", .{version});
+        if (self.options.version) |version| try self.stdout.interface.print("{}\n", .{version});
     }
 
     /// Prints traditional help with commands NOT organized by sections
     pub fn printHelp(self: *Command) !void {
         if (!self.options.deprecated) {
             try self.showInfo();
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
             if (self.options.help) |help| {
-                try self.stdout.print("{s}\n\n", .{help});
+                try self.stdout.interface.print("{s}\n\n", .{help});
             }
 
             const parents = try self.getParents(self.allocator);
@@ -408,14 +408,14 @@ pub const Command = struct {
 
             // Usage
             if (self.options.usage) |usage| {
-                try self.stdout.print("Usage: {s}\n", .{usage});
+                try self.stdout.interface.print("Usage: {s}\n", .{usage});
             } else {
                 try self.printUsageLine();
             }
 
             if (self.options.aliases) |aliases| {
                 if (aliases.len > 0) {
-                    try self.stdout.print("\n\n", .{});
+                    try self.stdout.interface.print("\n\n", .{});
                 }
             }
 
@@ -423,31 +423,31 @@ pub const Command = struct {
             try self.listAliases();
 
             // Sub commands
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
-            if (self.commands_by_name.count() > 0) try self.stdout.print("\n", .{});
+            if (self.commands_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
             try self.listCommands();
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
             // Flags
             try self.listFlags();
-            if (self.flags_by_name.count() > 0) try self.stdout.print("\n", .{});
+            if (self.flags_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
 
             // Arguments
             try self.listPositionalArgs();
 
             const has_subcommands = self.commands_by_name.count() > 0;
 
-            try self.stdout.print("Use \"", .{});
+            try self.stdout.interface.print("Use \"", .{});
             for (parents.items) |p| {
-                try self.stdout.print("{s} ", .{p.options.name});
+                try self.stdout.interface.print("{s} ", .{p.options.name});
             }
-            try self.stdout.print("{s}", .{self.options.name});
+            try self.stdout.interface.print("{s}", .{self.options.name});
 
             if (has_subcommands) {
-                try self.stdout.print(" [command]", .{});
+                try self.stdout.interface.print(" [command]", .{});
             }
-            try self.stdout.print(" --help\" for more information.\n", .{});
+            try self.stdout.interface.print(" --help\" for more information.\n", .{});
         }
     }
 
@@ -455,10 +455,10 @@ pub const Command = struct {
     pub fn printStructuredHelp(self: *Command) !void {
         if (!self.options.deprecated) {
             try self.showInfo();
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
             if (self.options.help) |help| {
-                try self.stdout.print("{s}\n\n", .{help});
+                try self.stdout.interface.print("{s}\n\n", .{help});
             }
 
             const parents = try self.getParents(self.allocator);
@@ -466,14 +466,14 @@ pub const Command = struct {
 
             // Usage
             if (self.options.usage) |usage| {
-                try self.stdout.print("Usage: {s}\n", .{usage});
+                try self.stdout.interface.print("Usage: {s}\n", .{usage});
             } else {
                 try self.printUsageLine();
             }
 
             if (self.options.aliases) |aliases| {
                 if (aliases.len > 0) {
-                    try self.stdout.print("\n\n", .{});
+                    try self.stdout.interface.print("\n\n", .{});
                 }
             }
 
@@ -481,31 +481,31 @@ pub const Command = struct {
             try self.listAliases();
 
             // Sub commands
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
-            if (self.commands_by_name.count() > 0) try self.stdout.print("\n", .{});
+            if (self.commands_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
             try self.listCommandsBySection();
-            try self.stdout.print("\n", .{});
+            try self.stdout.interface.print("\n", .{});
 
             // Flags
             try self.listFlags();
-            if (self.flags_by_name.count() > 0) try self.stdout.print("\n", .{});
+            if (self.flags_by_name.count() > 0) try self.stdout.interface.print("\n", .{});
 
             // Arguments
             try self.listPositionalArgs();
 
             const has_subcommands = self.commands_by_name.count() > 0;
 
-            try self.stdout.print("Use \"", .{});
+            try self.stdout.interface.print("Use \"", .{});
             for (parents.items) |p| {
-                try self.stdout.print("{s} ", .{p.options.name});
+                try self.stdout.interface.print("{s} ", .{p.options.name});
             }
-            try self.stdout.print("{s}", .{self.options.name});
+            try self.stdout.interface.print("{s}", .{self.options.name});
 
             if (has_subcommands) {
-                try self.stdout.print(" [command]", .{});
+                try self.stdout.interface.print(" [command]", .{});
             }
-            try self.stdout.print(" --help\" for more information.\n", .{});
+            try self.stdout.interface.print(" --help\" for more information.\n", .{});
         }
     }
 
@@ -731,13 +731,13 @@ pub const Command = struct {
     fn checkDeprecated(self: *const Command) !void {
         if (self.options.deprecated) {
             if (self.options.version) |version| {
-                try self.stdout.print("'{s}' v{} is deprecated\n", .{ self.options.name, version });
+                try self.stdout.interface.print("'{s}' v{} is deprecated\n", .{ self.options.name, version });
             } else {
-                try self.stdout.print("'{s}' is deprecated\n", .{self.options.name});
+                try self.stdout.interface.print("'{s}' is deprecated\n", .{self.options.name});
             }
 
             if (self.options.replaced_by) |new_cmd_name| {
-                try self.stdout.print("\nUse '{s}' instead.\n", .{new_cmd_name});
+                try self.stdout.interface.print("\nUse '{s}' instead.\n", .{new_cmd_name});
             }
 
             return error.CommandDeprecated;
