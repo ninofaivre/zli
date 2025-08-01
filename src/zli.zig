@@ -847,11 +847,11 @@ fn printAlignedCommands(commands: []*Command) !void {
         const desc = cmd.options.short_description orelse cmd.options.description;
 
         // Print name
-        try cmd.stdout.print("   {s}", .{cmd.options.name});
+        try cmd.stdout.interface.print("   {s}", .{cmd.options.name});
 
         // Print shortcut directly if exists
         if (cmd.options.shortcut) |s| {
-            try cmd.stdout.print(" ({s})", .{s});
+            try cmd.stdout.interface.print(" ({s})", .{s});
         }
 
         // Compute padding
@@ -869,7 +869,7 @@ fn printAlignedCommands(commands: []*Command) !void {
         const padding = max_width - printed_width;
 
         try cmd.stdout.writeByteNTimes(' ', padding + 4); // 4-space gap between name and desc
-        try cmd.stdout.print("{s}\n", .{desc});
+        try cmd.stdout.interface.print("{s}\n", .{desc});
     }
 }
 
@@ -906,15 +906,15 @@ fn printAlignedFlags(flags: []const Flag) !void {
 
         // Print shortcut if available
         if (flag.shortcut) |shortcut| {
-            try stdout.print(" -{s}, ", .{shortcut});
+            try stdout.interface.print(" -{s}, ", .{shortcut});
             current_width += 1 + shortcut.len + 2;
         } else {
-            try stdout.print("     ", .{});
+            try stdout.interface.print("     ", .{});
             current_width += 5;
         }
 
         // Print flag name
-        try stdout.print("--{s}", .{flag.name});
+        try stdout.interface.print("--{s}", .{flag.name});
         current_width += 2 + flag.name.len;
 
         // Calculate and add padding
@@ -922,20 +922,20 @@ fn printAlignedFlags(flags: []const Flag) !void {
         try stdout.writeByteNTimes(' ', padding + 4); // 4-space gap
 
         // Print description and type
-        try stdout.print("{s} [{s}]", .{
+        try stdout.interface.print("{s} [{s}]", .{
             flag.description,
             @tagName(flag.type),
         });
 
         // Print default value
         switch (flag.type) {
-            .Bool => try stdout.print(" (default: {s})", .{if (flag.default_value.Bool) "true" else "false"}),
-            .Int => try stdout.print(" (default: {})", .{flag.default_value.Int}),
+            .Bool => try stdout.interface.print(" (default: {s})", .{if (flag.default_value.Bool) "true" else "false"}),
+            .Int => try stdout.interface.print(" (default: {})", .{flag.default_value.Int}),
             .String => if (flag.default_value.String.len > 0) {
-                try stdout.print(" (default: \"{s}\")", .{flag.default_value.String});
+                try stdout.interface.print(" (default: \"{s}\")", .{flag.default_value.String});
             },
         }
-        try stdout.print("\n", .{});
+        try stdout.interface.print("\n", .{});
     }
 }
 
