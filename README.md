@@ -1,3 +1,5 @@
+# /!\ Outdated, only purpose was supporting zig 0.15.0 before official zli repo did. This branch should be considered archived /!\
+
 ### 📟 zli
 
 A **blazing-fast**, zero-cost CLI framework for Zig. The last one you will ever use.
